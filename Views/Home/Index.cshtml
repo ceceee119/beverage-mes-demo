@@ -1,0 +1,384 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<style>
+    /* KPI Cards */
+    .kpi-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .kpi-icon {
+        width: 52px; height: 52px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; flex-shrink: 0;
+    }
+    .kpi-value { font-size: 28px; font-weight: 700; color: #0f172a; line-height: 1; }
+    .kpi-label { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500; }
+    .kpi-trend { font-size: 11px; margin-top: 6px; font-weight: 600; }
+    .kpi-trend.up   { color: #22c55e; }
+    .kpi-trend.down { color: #ef4444; }
+
+    /* Section cards */
+    .section-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .section-card .card-header-custom {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-card .card-header-custom h6 {
+        margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;
+    }
+    .section-card .card-body-custom { padding: 20px; }
+
+    /* Status badge */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600;
+    }
+    .status-badge::before {
+        content: ''; width: 6px; height: 6px;
+        border-radius: 50%; background: currentColor;
+    }
+    .badge-running  { background: #dcfce7; color: #16a34a; }
+    .badge-idle     { background: #fef9c3; color: #ca8a04; }
+    .badge-error    { background: #fee2e2; color: #dc2626; }
+    .badge-pending  { background: #e0f2fe; color: #0284c7; }
+
+    /* Production table */
+    .prod-table { width: 100%; font-size: 13px; }
+    .prod-table th { padding: 8px 10px; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; }
+    .prod-table td { padding: 12px 10px; border-bottom: 1px solid #f8fafc; color: #334155; vertical-align: middle; }
+    .prod-table tr:last-child td { border-bottom: none; }
+
+    /* OEE bar */
+    .oee-bar-wrap { background: #f1f5f9; border-radius: 4px; height: 6px; overflow: hidden; }
+    .oee-bar { height: 100%; border-radius: 4px; background: #0ea5e9; }
+
+    /* Alert items */
+    .alert-item {
+        display: flex; align-items: flex-start; gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f8fafc;
+    }
+    .alert-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .alert-dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+    }
+    .dot-red    { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-blue   { background: #0ea5e9; }
+    .alert-item .alert-title { font-size: 13px; font-weight: 600; color: #0f172a; }
+    .alert-item .alert-time  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f172a;">Operations Dashboard</h4>
+        <p class="mb-0 text-muted" style="font-size:13px;">Real-time overview — Factory Floor A · Shift 2</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge rounded-pill" style="background:#f1f5f9;color:#334155;font-size:12px;padding:7px 14px;">
+            <i class="fa-regular fa-calendar me-1"></i> June 12, 2026
+        </span>
+        <span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:12px;padding:7px 14px;">
+            <i class="fa-solid fa-circle me-1" style="font-size:7px;"></i> Live
+        </span>
+    </div>
+</div>
+
+<!-- ── KPI Row ───────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#e0f2fe;color:#0284c7;">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div>
+                <div class="kpi-value">94.2<span style="font-size:16px;color:#64748b;">%</span></div>
+                <div class="kpi-label">Overall OEE</div>
+                <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up me-1"></i>+1.8% vs last shift</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#dcfce7;color:#16a34a;">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div>
+                <div class="kpi-value">3,847</div>
+                <div class="kpi-label">Units Produced Today</div>
+                <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up me-1"></i>+214 vs target</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#fef9c3;color:#ca8a04;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <div class="kpi-value">12</div>
+                <div class="kpi-label">Defects Detected</div>
+                <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-down me-1"></i>−4 vs yesterday</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:#ede9fe;color:#7c3aed;">
+                <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div>
+                <div class="kpi-value">$18.4<span style="font-size:16px;color:#64748b;">k</span></div>
+                <div class="kpi-label">Production Cost (Today)</div>
+                <div class="kpi-trend down"><i class="fa-solid fa-arrow-trend-up me-1"></i>+$0.6k over budget</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Row 2: Production Lines + Alerts ─────────────────────────── -->
+<div class="row g-3 mb-4">
+
+    <!-- Production Line Status -->
+    <div class="col-lg-8">
+        <div class="section-card h-100">
+            <div class="card-header-custom">
+                <h6><i class="fa-solid fa-industry me-2 text-primary"></i>Production Line Status</h6>
+                <a href="#" class="text-primary" style="font-size:12px;text-decoration:none;">View All Lines →</a>
+            </div>
+            <div class="card-body-custom p-0">
+                <table class="prod-table">
+                    <thead>
+                        <tr>
+                            <th style="padding-left:20px;">Line</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>OEE</th>
+                            <th>Output</th>
+                            <th style="padding-right:20px;">Operator</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;">Line A-1</td>
+                            <td>PCB Assembly</td>
+                            <td><span class="status-badge badge-running">Running</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="oee-bar-wrap" style="width:80px;"><div class="oee-bar" style="width:91%;"></div></div>
+                                    <span style="font-size:12px;font-weight:600;color:#0f172a;">91%</span>
+                                </div>
+                            </td>
+                            <td>1,204 pcs</td>
+                            <td style="padding-right:20px;color:#64748b;">Chen Wei</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;">Line A-2</td>
+                            <td>SMT Soldering</td>
+                            <td><span class="status-badge badge-running">Running</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="oee-bar-wrap" style="width:80px;"><div class="oee-bar" style="width:87%;background:#22c55e;"></div></div>
+                                    <span style="font-size:12px;font-weight:600;color:#0f172a;">87%</span>
+                                </div>
+                            </td>
+                            <td>987 pcs</td>
+                            <td style="padding-right:20px;color:#64748b;">Lin Jia</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;">Line B-1</td>
+                            <td>Final Testing</td>
+                            <td><span class="status-badge badge-idle">Idle</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="oee-bar-wrap" style="width:80px;"><div class="oee-bar" style="width:42%;background:#f59e0b;"></div></div>
+                                    <span style="font-size:12px;font-weight:600;color:#0f172a;">42%</span>
+                                </div>
+                            </td>
+                            <td>456 pcs</td>
+                            <td style="padding-right:20px;color:#64748b;">Wang Fang</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;">Line B-2</td>
+                            <td>Packaging</td>
+                            <td><span class="status-badge badge-error">Error</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="oee-bar-wrap" style="width:80px;"><div class="oee-bar" style="width:0%;background:#ef4444;"></div></div>
+                                    <span style="font-size:12px;font-weight:600;color:#ef4444;">0%</span>
+                                </div>
+                            </td>
+                            <td>—</td>
+                            <td style="padding-right:20px;color:#64748b;">Zhang Min</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;">Line C-1</td>
+                            <td>Housing Assembly</td>
+                            <td><span class="status-badge badge-pending">Pending</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="oee-bar-wrap" style="width:80px;"><div class="oee-bar" style="width:0%;"></div></div>
+                                    <span style="font-size:12px;font-weight:600;color:#94a3b8;">—</span>
+                                </div>
+                            </td>
+                            <td>—</td>
+                            <td style="padding-right:20px;color:#64748b;">Liu Yang</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="col-lg-4">
+        <div class="section-card h-100">
+            <div class="card-header-custom">
+                <h6><i class="fa-solid fa-bell me-2" style="color:#f59e0b;"></i>Active Alerts</h6>
+                <span class="badge" style="background:#fee2e2;color:#dc2626;font-size:11px;">3 Critical</span>
+            </div>
+            <div class="card-body-custom">
+                <div class="alert-item">
+                    <div class="alert-dot dot-red mt-1"></div>
+                    <div>
+                        <div class="alert-title">Low Stock: Capacitor C102</div>
+                        <div class="alert-time">Inventory · 8 min ago</div>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-dot dot-red mt-1"></div>
+                    <div>
+                        <div class="alert-title">Line B-2 Emergency Stop</div>
+                        <div class="alert-time">Equipment · 12 min ago</div>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-dot dot-yellow mt-1"></div>
+                    <div>
+                        <div class="alert-title">AI QC Defect Rate &gt; 0.8%</div>
+                        <div class="alert-time">Quality · 31 min ago</div>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-dot dot-yellow mt-1"></div>
+                    <div>
+                        <div class="alert-title">Order #ORD-2026-0841 Delayed</div>
+                        <div class="alert-time">Orders · 1 hr ago</div>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-dot dot-blue mt-1"></div>
+                    <div>
+                        <div class="alert-title">Scheduled Maintenance: Line A-1</div>
+                        <div class="alert-time">Maintenance · Tomorrow 06:00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Row 3: Order Pipeline + Quick Stats ───────────────────────── -->
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="section-card">
+            <div class="card-header-custom">
+                <h6><i class="fa-solid fa-clipboard-list me-2" style="color:#6366f1;"></i>Order Pipeline</h6>
+                <a href="#" class="text-primary" style="font-size:12px;text-decoration:none;">View All →</a>
+            </div>
+            <div class="card-body-custom p-0">
+                <table class="prod-table">
+                    <thead>
+                        <tr>
+                            <th style="padding-left:20px;">Order ID</th>
+                            <th>Customer</th>
+                            <th>Qty</th>
+                            <th>Due Date</th>
+                            <th style="padding-right:20px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;color:#0ea5e9;">ORD-0841</td>
+                            <td>Foxconn Ltd.</td>
+                            <td>5,000</td>
+                            <td>Jun 14</td>
+                            <td style="padding-right:20px;"><span class="status-badge badge-error">Delayed</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;color:#0ea5e9;">ORD-0842</td>
+                            <td>Delta Group</td>
+                            <td>2,200</td>
+                            <td>Jun 16</td>
+                            <td style="padding-right:20px;"><span class="status-badge badge-running">On Track</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;color:#0ea5e9;">ORD-0843</td>
+                            <td>ASUS Corp.</td>
+                            <td>800</td>
+                            <td>Jun 20</td>
+                            <td style="padding-right:20px;"><span class="status-badge badge-pending">Queued</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;font-weight:600;color:#0ea5e9;">ORD-0844</td>
+                            <td>MediaTek</td>
+                            <td>3,500</td>
+                            <td>Jun 25</td>
+                            <td style="padding-right:20px;"><span class="status-badge badge-pending">Queued</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="section-card h-100">
+            <div class="card-header-custom">
+                <h6><i class="fa-solid fa-chart-pie me-2" style="color:#22c55e;"></i>Yield & Quality Summary</h6>
+                <span style="font-size:12px;color:#64748b;">Today's shift</span>
+            </div>
+            <div class="card-body-custom">
+                <div class="row g-3">
+                    @foreach (var item in new[] {
+                        new { Label = "Yield Rate",        Value = "99.69%", Sub = "3,847 / 3,859",  Color = "#22c55e", Bg = "#dcfce7", Icon = "fa-circle-check" },
+                        new { Label = "First Pass Yield",  Value = "98.14%", Sub = "Target: 98.0%",   Color = "#0ea5e9", Bg = "#e0f2fe", Icon = "fa-medal" },
+                        new { Label = "Defect Rate",       Value = "0.31%",  Sub = "12 units flagged",Color = "#f59e0b", Bg = "#fef9c3", Icon = "fa-triangle-exclamation" },
+                        new { Label = "Rework Rate",       Value = "0.18%",  Sub = "7 units reworked",Color = "#a855f7", Bg = "#f3e8ff", Icon = "fa-screwdriver-wrench" }
+                    })
+                    {
+                        <div class="col-6">
+                            <div style="background:@item.Bg;border-radius:10px;padding:16px;">
+                                <div style="font-size:11px;font-weight:600;color:@item.Color;margin-bottom:6px;">
+                                    <i class="fa-solid @item.Icon me-1"></i>@item.Label
+                                </div>
+                                <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1;">@item.Value</div>
+                                <div style="font-size:11px;color:#64748b;margin-top:4px;">@item.Sub</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
