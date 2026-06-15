@@ -1,0 +1,285 @@
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<style>
+    /* ── 共用卡片 ── */
+    .section-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:hidden; }
+    .card-header-custom { padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; }
+    .card-header-custom h6 { margin:0; font-size:14px; font-weight:700; color:#0f172a; }
+
+    /* ── 工具列 ── */
+    .toolbar { padding:16px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-bottom:1px solid #f1f5f9; }
+    .search-box { position:relative; flex:1; min-width:180px; }
+    .search-box i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:13px; }
+    .search-box input { width:100%; padding:8px 12px 8px 34px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; color:#334155; outline:none; }
+    .search-box input:focus { border-color:#0ea5e9; }
+    .filter-select { padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; color:#334155; background:#fff; cursor:pointer; }
+    .btn-primary-sm { padding:8px 16px; background:#0ea5e9; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; }
+    .btn-primary-sm:hover { background:#0284c7; }
+    .btn-outline-sm { padding:8px 14px; background:#fff; color:#64748b; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+    .btn-outline-sm:hover { background:#f8fafc; }
+
+    /* ── View Toggle ── */
+    .view-toggle { display:flex; background:#f1f5f9; border-radius:8px; padding:3px; gap:2px; }
+    .view-toggle button {
+        padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:600;
+        cursor:pointer; background:transparent; color:#64748b; transition:all 0.15s;
+    }
+    .view-toggle button.active { background:#fff; color:#0ea5e9; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+
+    /* ── 狀態 Badge ── */
+    .status-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .status-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .badge-queued   { background:#e0f2fe; color:#0284c7; }
+    .badge-progress { background:#fef9c3; color:#ca8a04; }
+    .badge-qc       { background:#ede9fe; color:#7c3aed; }
+    .badge-done     { background:#dcfce7; color:#16a34a; }
+    .badge-delayed  { background:#fee2e2; color:#dc2626; }
+
+    /* ── 備料燈號 ── */
+    .mat-light { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; }
+    .mat-dot { width:9px; height:9px; border-radius:50%; }
+    .mat-ready   { background:#22c55e; box-shadow:0 0 4px rgba(34,197,94,0.5); }
+    .mat-partial { background:#f59e0b; box-shadow:0 0 4px rgba(245,158,11,0.5); }
+    .mat-missing { background:#ef4444; box-shadow:0 0 4px rgba(239,68,68,0.5); }
+
+    /* ── List Table ── */
+    .data-table { width:100%; font-size:13px; border-collapse:collapse; }
+    .data-table th { padding:10px 16px; color:#64748b; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+    .data-table td { padding:13px 16px; border-bottom:1px solid #f1f5f9; color:#334155; vertical-align:middle; }
+    .data-table tbody tr:hover { background:#f0f9ff; }
+    .data-table tbody tr:last-child td { border-bottom:none; }
+    .order-id { font-weight:700; color:#0ea5e9; font-family:monospace; }
+
+    /* ── 分頁 ── */
+    .pagination-bar { padding:14px 20px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid #f1f5f9; font-size:12px; color:#64748b; }
+    .page-btns { display:flex; gap:4px; }
+    .page-btn { width:30px; height:30px; border-radius:6px; border:1px solid #e2e8f0; background:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#334155; }
+    .page-btn:hover { border-color:#0ea5e9; color:#0ea5e9; }
+    .page-btn.active { background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
+
+    /* ── Kanban ── */
+    .kanban-wrapper { display:flex; gap:16px; overflow-x:auto; padding:20px; min-height:500px; }
+    .kanban-col { flex:0 0 260px; display:flex; flex-direction:column; gap:0; }
+    .kanban-col-header {
+        padding:10px 14px; border-radius:10px 10px 0 0;
+        font-size:12px; font-weight:700; letter-spacing:0.04em;
+        display:flex; align-items:center; justify-content:space-between;
+    }
+    .kanban-col-body { flex:1; background:#f8fafc; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 10px 10px; padding:10px; display:flex; flex-direction:column; gap:10px; }
+    .kanban-card {
+        background:#fff; border-radius:8px; border:1px solid #e2e8f0;
+        padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
+        cursor:pointer; transition:box-shadow 0.15s, transform 0.15s;
+    }
+    .kanban-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.08); transform:translateY(-1px); }
+    .kanban-card .kc-id { font-size:11px; font-weight:700; font-family:monospace; color:#0ea5e9; margin-bottom:6px; }
+    .kanban-card .kc-customer { font-size:13px; font-weight:700; color:#0f172a; margin-bottom:4px; }
+    .kanban-card .kc-meta { font-size:11px; color:#64748b; margin-bottom:8px; }
+    .kanban-card .kc-footer { display:flex; align-items:center; justify-content:space-between; }
+    .progress-thin { background:#f1f5f9; border-radius:3px; height:4px; margin:8px 0; overflow:hidden; }
+    .progress-thin-bar { height:100%; border-radius:3px; }
+    .col-queued   { background:#e0f2fe; color:#0284c7; }
+    .col-progress { background:#fef9c3; color:#ca8a04; }
+    .col-qc       { background:#ede9fe; color:#7c3aed; }
+    .col-done     { background:#dcfce7; color:#16a34a; }
+    .col-count { background:rgba(255,255,255,0.6); border-radius:10px; padding:1px 7px; font-size:11px; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f172a;">Orders & Scheduling</h4>
+        <p class="mb-0 text-muted" style="font-size:13px;">訂單管理與生產排程</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button id="btnList" class="active" onclick="switchView('list')">
+                <i class="fa-solid fa-list me-1"></i>List View
+            </button>
+            <button id="btnKanban" onclick="switchView('kanban')">
+                <i class="fa-solid fa-table-columns me-1"></i>Kanban
+            </button>
+        </div>
+        <button class="btn-primary-sm"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+    </div>
+</div>
+
+<!-- ══ LIST VIEW ════════════════════════════════════════════════════════ -->
+<div id="listView">
+    <div class="section-card">
+        <div class="card-header-custom">
+            <h6><i class="fa-solid fa-clipboard-list me-2" style="color:#6366f1;"></i>訂單列表</h6>
+            <span style="font-size:12px;color:#64748b;">共 6 筆訂單</span>
+        </div>
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="orderSearch" placeholder="搜尋訂單編號或客戶…" oninput="filterOrders()">
+            </div>
+            <select class="filter-select" id="stageFilter" onchange="filterOrders()">
+                <option value="">全部階段</option>
+                <option value="Queued">待備料</option>
+                <option value="In Progress">生產中</option>
+                <option value="QC">品質檢驗</option>
+                <option value="Completed">已出貨</option>
+            </select>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>訂單編號</th>
+                        <th>客戶</th>
+                        <th>數量</th>
+                        <th>相關 SKU</th>
+                        <th>交期</th>
+                        <th>備料狀態</th>
+                        <th>階段</th>
+                        <th>動作</th>
+                    </tr>
+                </thead>
+                <tbody id="orderBody"></tbody>
+            </table>
+        </div>
+        <div class="pagination-bar">
+            <span id="orderPageInfo">顯示第 1–6 筆，共 6 筆</span>
+            <div class="page-btns">
+                <button class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ KANBAN VIEW ══════════════════════════════════════════════════════ -->
+<div id="kanbanView" style="display:none;">
+    <div class="section-card">
+        <div class="card-header-custom">
+            <h6><i class="fa-solid fa-table-columns me-2" style="color:#6366f1;"></i>生產看板</h6>
+            <span style="font-size:12px;color:#64748b;">拖曳卡片可更新階段（示意）</span>
+        </div>
+        <div class="kanban-wrapper" id="kanbanWrapper">
+            <!-- 看板由 JS 渲染 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ── Mock 訂單資料 ─────────────────────────────────────────────── */
+    // matStatus: ready=備料齊全 / partial=部分缺料 / missing=嚴重缺料
+    const ordersData = [
+        { id:'ORD-2026-0841', customer:'Foxconn Ltd.',   qty:5000, skus:['SKU-001','SKU-004'], due:'2026-06-14', stage:'In Progress', matStatus:'partial',  progress:65, delayed:true  },
+        { id:'ORD-2026-0842', customer:'Delta Group',    qty:2200, skus:['SKU-002','SKU-005'], due:'2026-06-16', stage:'In Progress', matStatus:'ready',    progress:45, delayed:false },
+        { id:'ORD-2026-0843', customer:'ASUS Corp.',     qty:800,  skus:['SKU-003','SKU-006'], due:'2026-06-20', stage:'Queued',      matStatus:'missing',  progress:0,  delayed:false },
+        { id:'ORD-2026-0844', customer:'MediaTek',       qty:3500, skus:['SKU-007','SKU-008'], due:'2026-06-25', stage:'Queued',      matStatus:'partial',  progress:0,  delayed:false },
+        { id:'ORD-2026-0845', customer:'Pegatron Corp.', qty:1500, skus:['SKU-004','SKU-002'], due:'2026-06-18', stage:'QC',          matStatus:'ready',    progress:90, delayed:false },
+        { id:'ORD-2026-0840', customer:'Compal Elec.',   qty:2800, skus:['SKU-001','SKU-007'], due:'2026-06-10', stage:'Completed',   matStatus:'ready',    progress:100,delayed:false },
+    ];
+
+    function matBadge(s) {
+        const map = {
+            ready:   `<span class="mat-light"><span class="mat-dot mat-ready"></span>備料齊全</span>`,
+            partial: `<span class="mat-light"><span class="mat-dot mat-partial"></span>部分缺料</span>`,
+            missing: `<span class="mat-light"><span class="mat-dot mat-missing"></span>嚴重缺料</span>`,
+        };
+        return map[s] || '';
+    }
+
+    function stageBadge(s, delayed) {
+        if (delayed) return `<span class="status-badge badge-delayed">Delayed</span>`;
+        const map = {
+            'Queued':      'badge-queued',
+            'In Progress': 'badge-progress',
+            'QC':          'badge-qc',
+            'Completed':   'badge-done',
+        };
+        return `<span class="status-badge ${map[s]}">${s}</span>`;
+    }
+
+    /* ── List View 渲染 ───────────────────────────────────────────── */
+    function renderOrders(data) {
+        document.getElementById('orderBody').innerHTML = data.map(o => `
+            <tr>
+                <td><span class="order-id">${o.id}</span></td>
+                <td>${o.customer}</td>
+                <td>${o.qty.toLocaleString()} 個</td>
+                <td>${o.skus.map(s=>`<span style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;margin-right:3px;">${s}</span>`).join('')}</td>
+                <td style="${o.delayed?'color:#dc2626;font-weight:600;':''}">${o.due}</td>
+                <td>${matBadge(o.matStatus)}</td>
+                <td>${stageBadge(o.stage, o.delayed)}</td>
+                <td>
+                    <button style="padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#0ea5e9;">
+                        <i class="fa-solid fa-eye me-1"></i>詳情
+                    </button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function filterOrders() {
+        const q = document.getElementById('orderSearch').value.toLowerCase();
+        const s = document.getElementById('stageFilter').value;
+        const filtered = ordersData.filter(o =>
+            (o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q)) &&
+            (s === '' || o.stage === s)
+        );
+        renderOrders(filtered);
+        document.getElementById('orderPageInfo').textContent = `顯示第 1–${filtered.length} 筆，共 ${filtered.length} 筆`;
+    }
+
+    /* ── Kanban 渲染 ──────────────────────────────────────────────── */
+    const kanbanCols = [
+        { key:'Queued',      label:'待備料',   cls:'col-queued',   barColor:'#0ea5e9' },
+        { key:'In Progress', label:'生產中',   cls:'col-progress', barColor:'#f59e0b' },
+        { key:'QC',          label:'品質檢驗', cls:'col-qc',       barColor:'#7c3aed' },
+        { key:'Completed',   label:'已出貨',   cls:'col-done',     barColor:'#22c55e' },
+    ];
+
+    function renderKanban() {
+        const wrapper = document.getElementById('kanbanWrapper');
+        wrapper.innerHTML = kanbanCols.map(col => {
+            const cards = ordersData.filter(o => o.stage === col.key);
+            return `
+            <div class="kanban-col">
+                <div class="kanban-col-header ${col.cls}">
+                    <span>${col.label}</span>
+                    <span class="col-count">${cards.length}</span>
+                </div>
+                <div class="kanban-col-body">
+                    ${cards.length === 0
+                        ? `<div style="text-align:center;padding:30px 10px;color:#94a3b8;font-size:12px;"><i class="fa-regular fa-folder-open" style="font-size:24px;display:block;margin-bottom:8px;"></i>無訂單</div>`
+                        : cards.map(o => `
+                        <div class="kanban-card">
+                            <div class="kc-id">${o.id}</div>
+                            <div class="kc-customer">${o.customer}</div>
+                            <div class="kc-meta"><i class="fa-solid fa-boxes-stacked me-1"></i>${o.qty.toLocaleString()} 個 &nbsp;·&nbsp; <i class="fa-regular fa-calendar me-1"></i>${o.due}</div>
+                            ${o.progress > 0 ? `
+                            <div class="progress-thin">
+                                <div class="progress-thin-bar" style="width:${o.progress}%;background:${col.barColor};"></div>
+                            </div>
+                            <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">進度 ${o.progress}%</div>` : ''}
+                            <div class="kc-footer">
+                                ${matBadge(o.matStatus)}
+                                ${o.delayed ? `<span style="font-size:10px;color:#dc2626;font-weight:700;"><i class="fa-solid fa-clock me-1"></i>延誤</span>` : ''}
+                            </div>
+                        </div>`).join('')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    /* ── View 切換 ───────────────────────────────────────────────── */
+    function switchView(v) {
+        document.getElementById('listView').style.display   = v === 'list'   ? 'block' : 'none';
+        document.getElementById('kanbanView').style.display = v === 'kanban' ? 'block' : 'none';
+        document.getElementById('btnList').classList.toggle('active',   v === 'list');
+        document.getElementById('btnKanban').classList.toggle('active', v === 'kanban');
+        if (v === 'kanban') renderKanban();
+    }
+
+    /* ── 初始渲染 ─────────────────────────────────────────────────── */
+    renderOrders(ordersData);
+</script>

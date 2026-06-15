@@ -79,16 +79,26 @@ The sidebar link for a new controller only highlights if its `asp-controller` va
 - All page content goes inside the view file only — `_Layout.cshtml` injects it via `@RenderBody()`
 - The sidebar uses CSS variable `--sidebar-width: 250px` and is fixed-position
 
-## Planned Modules
+## Modules
 
-| Controller | Route | Status |
-|---|---|---|
-| `Home` | `/` | Done (Dashboard) |
-| `Inventory` | `/Inventory` | Pending |
-| `Orders` | `/Orders` | Pending |
-| `AiQC` | `/AiQC` | Pending |
-| `CostAnalytics` | `/CostAnalytics` | Pending |
-| `RBAC` | `/RBAC` | Pending |
+| Controller | Route | Status | 說明 |
+|---|---|---|---|
+| `Home` | `/` | ✅ Done | Dashboard — KPI、產線狀態、告警、訂單 Pipeline |
+| `Inventory` | `/Inventory` | ✅ Done | 進銷存管理 — Data Grid、庫存率 Bar、右側 Drawer（流水帳 + 歷史成本） |
+| `Orders` | `/Orders` | ✅ Done | 訂單排程 — List View / Kanban Board 切換、備料燈號 |
+| `CostAnalytics` | `/CostAnalytics` | ✅ Done | 成本分析 — KPI 卡、成本結構、訂單拆解表（利潤率 Bar） |
+| `AiQC` | `/AiQC` | ✅ Done | AI 品檢 — 雙欄佈局、瑕疵清單、PCB 模擬圖 + Bounding Box |
+| `RBAC` | `/RBAC` | ⏳ Pending | 權限管理（尚未實作） |
+
+## Mock 資料關聯說明
+
+所有頁面 Mock 資料共用同一組欄位互相關聯：
+
+- **Order_ID**：`ORD-2026-0840` ～ `ORD-2026-0845`（出現在 Orders、CostAnalytics、Dashboard）
+- **SKU_ID**：`SKU-001` ～ `SKU-008`（出現在 Inventory、Orders 備料狀態）
+- Inventory 的 `status` 欄位影響 Orders 看板上的「備料燈號」顯示邏輯
+
+日後對接後端 API 時，將 View 中的 JavaScript Mock 陣列替換為 `fetch()` 呼叫即可。
 
 ## Git & Collaboration
 

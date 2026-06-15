@@ -1,0 +1,440 @@
+@{
+    ViewData["Title"] = "Inventory";
+}
+
+<style>
+    /* ── 共用卡片 ── */
+    .section-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .card-header-custom {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header-custom h6 { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; }
+
+    /* ── 工具列 ── */
+    .toolbar { padding: 16px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9; }
+    .search-box {
+        position: relative; flex: 1; min-width: 200px;
+    }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px; }
+    .search-box input {
+        width: 100%; padding: 8px 12px 8px 34px;
+        border: 1px solid #e2e8f0; border-radius: 8px;
+        font-size: 13px; color: #334155; outline: none;
+        transition: border-color 0.15s;
+    }
+    .search-box input:focus { border-color: #0ea5e9; }
+    .filter-select {
+        padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+        font-size: 13px; color: #334155; background: #fff; cursor: pointer; outline: none;
+    }
+    .btn-primary-sm {
+        padding: 8px 16px; background: #0ea5e9; color: #fff;
+        border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        transition: background 0.15s;
+    }
+    .btn-primary-sm:hover { background: #0284c7; }
+    .btn-outline-sm {
+        padding: 8px 14px; background: #fff; color: #64748b;
+        border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        transition: background 0.15s;
+    }
+    .btn-outline-sm:hover { background: #f8fafc; }
+
+    /* ── 資料表 ── */
+    .data-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .data-table th {
+        padding: 10px 16px; color: #64748b; font-weight: 600;
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+        background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+    .data-table td { padding: 13px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .data-table tbody tr { transition: background 0.12s; cursor: pointer; }
+    .data-table tbody tr:hover { background: #f0f9ff; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .sku-code { font-weight: 700; color: #0ea5e9; font-family: monospace; font-size: 13px; }
+
+    /* ── 狀態 Badge ── */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600;
+    }
+    .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge-instock  { background: #dcfce7; color: #16a34a; }
+    .badge-lowstock { background: #fef9c3; color: #ca8a04; }
+    .badge-outstock { background: #fee2e2; color: #dc2626; }
+
+    /* ── 庫存 Bar ── */
+    .stock-bar-wrap { background: #f1f5f9; border-radius: 4px; height: 6px; width: 80px; overflow: hidden; display: inline-block; }
+    .stock-bar { height: 100%; border-radius: 4px; }
+
+    /* ── 分頁 ── */
+    .pagination-bar {
+        padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+        border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b;
+    }
+    .page-btns { display: flex; gap: 4px; }
+    .page-btn {
+        width: 30px; height: 30px; border-radius: 6px; border: 1px solid #e2e8f0;
+        background: #fff; font-size: 12px; cursor: pointer; display: flex;
+        align-items: center; justify-content: center; color: #334155;
+        transition: all 0.12s;
+    }
+    .page-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
+    .page-btn.active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+
+    /* ── Drawer ── */
+    .offcanvas-header { padding: 20px 24px; border-bottom: 1px solid #f1f5f9; }
+    .offcanvas-body { padding: 0; }
+    .drawer-section { padding: 20px 24px; border-bottom: 1px solid #f1f5f9; }
+    .drawer-section:last-child { border-bottom: none; }
+    .drawer-section-title {
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 14px;
+    }
+    .drawer-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .drawer-stat {
+        background: #f8fafc; border-radius: 8px; padding: 12px 14px;
+        border: 1px solid #e2e8f0;
+    }
+    .drawer-stat .stat-label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    .drawer-stat .stat-value { font-size: 16px; font-weight: 700; color: #0f172a; }
+    .txn-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+    .txn-table th { padding: 8px 10px; color: #94a3b8; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; }
+    .txn-table td { padding: 10px; border-bottom: 1px solid #f8fafc; color: #334155; }
+    .txn-table tr:last-child td { border-bottom: none; }
+    .txn-in  { color: #16a34a; font-weight: 700; }
+    .txn-out { color: #dc2626; font-weight: 700; }
+    .cost-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f8fafc; font-size: 12px; }
+    .cost-item:last-child { border-bottom: none; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f172a;">Inventory Management</h4>
+        <p class="mb-0 text-muted" style="font-size:13px;">料號庫存管理 · 安全庫存監控</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn-outline-sm"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+        <button class="btn-primary-sm"><i class="fa-solid fa-plus"></i> 新增料號</button>
+    </div>
+</div>
+
+<!-- Summary KPI mini row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;font-size:18px;"><i class="fa-solid fa-circle-check"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;">5</div><div style="font-size:12px;color:#64748b;">In Stock 料號</div></div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;color:#ca8a04;font-size:18px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;">2</div><div style="font-size:12px;color:#64748b;">Low Stock 警示</div></div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;font-size:18px;"><i class="fa-solid fa-ban"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;">1</div><div style="font-size:12px;color:#64748b;">Out of Stock 缺料</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Grid -->
+<div class="section-card">
+    <div class="card-header-custom">
+        <h6><i class="fa-solid fa-boxes-stacked me-2 text-primary"></i>料號庫存總覽</h6>
+        <span style="font-size:12px;color:#64748b;">共 8 筆料號 · 點擊列查看流水帳</span>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="搜尋 SKU 或品名…" oninput="filterTable()">
+        </div>
+        <select class="filter-select" id="statusFilter" onchange="filterTable()">
+            <option value="">全部狀態</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <div style="overflow-x:auto;">
+        <table class="data-table" id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>品名</th>
+                    <th>當前庫存量</th>
+                    <th>安全庫存水位</th>
+                    <th>庫存率</th>
+                    <th>單價 (USD)</th>
+                    <th>狀態</th>
+                    <th>動作</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar">
+        <span id="pageInfo">顯示第 1–8 筆，共 8 筆</span>
+        <div class="page-btns">
+            <button class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Right Drawer (Bootstrap Offcanvas) ══════════════════════════════ -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="inventoryDrawer" style="width:490px;">
+    <div class="offcanvas-header">
+        <div>
+            <div id="drawerSkuCode" style="font-family:monospace;font-size:13px;color:#0ea5e9;font-weight:700;"></div>
+            <div id="drawerSkuName" style="font-size:18px;font-weight:700;color:#0f172a;margin-top:2px;"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <!-- Mini Stats -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">庫存摘要</div>
+            <div class="drawer-mini-stats">
+                <div class="drawer-stat">
+                    <div class="stat-label">當前庫存量</div>
+                    <div class="stat-value" id="dCurrent">—</div>
+                </div>
+                <div class="drawer-stat">
+                    <div class="stat-label">安全庫存水位</div>
+                    <div class="stat-value" id="dSafety">—</div>
+                </div>
+                <div class="drawer-stat">
+                    <div class="stat-label">單價 (USD)</div>
+                    <div class="stat-value" id="dPrice">—</div>
+                </div>
+                <div class="drawer-stat">
+                    <div class="stat-label">狀態</div>
+                    <div class="stat-value" id="dStatus">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Logs -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">近期進出庫流水帳</div>
+            <table class="txn-table">
+                <thead>
+                    <tr>
+                        <th>日期時間</th>
+                        <th>類型</th>
+                        <th>數量</th>
+                        <th>結餘</th>
+                        <th>參考單號</th>
+                    </tr>
+                </thead>
+                <tbody id="txnBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Historical Cost -->
+        <div class="drawer-section">
+            <div class="drawer-section-title">歷史採購成本（近 6 個月）</div>
+            <div id="costHistory"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ── Mock 資料 ──────────────────────────────────────────────────── */
+    const inventoryData = [
+        { sku:'SKU-001', name:'電容 Capacitor C102', stock:450,  safety:500,  price:0.15, status:'Low Stock',    related:['ORD-0841','ORD-0840'] },
+        { sku:'SKU-002', name:'電阻 Resistor R205',  stock:1200, safety:800,  price:0.08, status:'In Stock',     related:['ORD-0842','ORD-0845'] },
+        { sku:'SKU-003', name:'IC 晶片 U404',        stock:0,    safety:200,  price:2.50, status:'Out of Stock', related:['ORD-0843'] },
+        { sku:'SKU-004', name:'PCB 板 v3.1',         stock:320,  safety:300,  price:8.50, status:'In Stock',     related:['ORD-0841','ORD-0845'] },
+        { sku:'SKU-005', name:'電感 Inductor L101',  stock:880,  safety:600,  price:0.35, status:'In Stock',     related:['ORD-0842'] },
+        { sku:'SKU-006', name:'連接器 Connector J301',stock:150, safety:400,  price:1.20, status:'Low Stock',    related:['ORD-0843'] },
+        { sku:'SKU-007', name:'LED 燈 D502',         stock:2500, safety:1000, price:0.05, status:'In Stock',     related:['ORD-0844','ORD-0840'] },
+        { sku:'SKU-008', name:'MOSFET Q201',         stock:75,   safety:300,  price:3.80, status:'Low Stock',    related:['ORD-0844'] },
+    ];
+
+    // 每個 SKU 的模擬流水帳
+    const txnData = {
+        'SKU-001': [
+            { dt:'2026-06-14 09:12', type:'OUT', qty:-200, bal:450,  ref:'ORD-0841' },
+            { dt:'2026-06-13 14:30', type:'IN',  qty:300,  bal:650,  ref:'PO-2026-112' },
+            { dt:'2026-06-12 08:05', type:'OUT', qty:-150, bal:350,  ref:'ORD-0840' },
+            { dt:'2026-06-10 16:45', type:'IN',  qty:500,  bal:500,  ref:'PO-2026-098' },
+            { dt:'2026-06-08 10:20', type:'OUT', qty:-100, bal:0,    ref:'ORD-0838' },
+            { dt:'2026-06-05 13:00', type:'IN',  qty:400,  bal:100,  ref:'PO-2026-085' },
+        ],
+        'SKU-002': [
+            { dt:'2026-06-14 11:00', type:'IN',  qty:500,  bal:1200, ref:'PO-2026-115' },
+            { dt:'2026-06-13 09:30', type:'OUT', qty:-300, bal:700,  ref:'ORD-0842' },
+            { dt:'2026-06-11 15:20', type:'IN',  qty:600,  bal:1000, ref:'PO-2026-101' },
+            { dt:'2026-06-09 08:45', type:'OUT', qty:-200, bal:400,  ref:'ORD-0839' },
+            { dt:'2026-06-07 14:10', type:'IN',  qty:400,  bal:600,  ref:'PO-2026-092' },
+            { dt:'2026-06-05 10:30', type:'OUT', qty:-100, bal:200,  ref:'ORD-0836' },
+        ],
+        'SKU-003': [
+            { dt:'2026-06-13 17:00', type:'OUT', qty:-200, bal:0,   ref:'ORD-0843 (缺料警示)' },
+            { dt:'2026-06-10 09:00', type:'IN',  qty:200,  bal:200, ref:'PO-2026-099' },
+            { dt:'2026-06-08 13:20', type:'OUT', qty:-150, bal:0,   ref:'ORD-0837' },
+            { dt:'2026-06-05 10:00', type:'IN',  qty:300,  bal:150, ref:'PO-2026-088' },
+            { dt:'2026-06-02 16:30', type:'OUT', qty:-100, bal:-150,ref:'ORD-0832' },
+            { dt:'2026-05-30 09:15', type:'IN',  qty:400,  bal:250, ref:'PO-2026-071' },
+        ],
+    };
+
+    // 歷史成本模擬
+    const costHistoryData = {
+        'SKU-001': [
+            { month:'2026-01', cost:0.13, change:'+' }, { month:'2026-02', cost:0.14, change:'+' },
+            { month:'2026-03', cost:0.14, change:'=' }, { month:'2026-04', cost:0.15, change:'+' },
+            { month:'2026-05', cost:0.15, change:'=' }, { month:'2026-06', cost:0.15, change:'=' },
+        ],
+        'SKU-002': [
+            { month:'2026-01', cost:0.07, change:'+' }, { month:'2026-02', cost:0.08, change:'+' },
+            { month:'2026-03', cost:0.08, change:'=' }, { month:'2026-04', cost:0.08, change:'=' },
+            { month:'2026-05', cost:0.08, change:'=' }, { month:'2026-06', cost:0.08, change:'=' },
+        ],
+    };
+
+    /* ── 渲染表格 ─────────────────────────────────────────────────── */
+    function statusBadge(s) {
+        const map = { 'In Stock':'badge-instock','Low Stock':'badge-lowstock','Out of Stock':'badge-outstock' };
+        return `<span class="status-badge ${map[s]}">${s}</span>`;
+    }
+
+    function stockBarColor(item) {
+        const pct = Math.min(100, Math.round((item.stock / item.safety) * 100));
+        const color = item.status === 'In Stock' ? '#22c55e' : item.status === 'Low Stock' ? '#f59e0b' : '#ef4444';
+        return { pct: Math.max(0, pct), color };
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('inventoryBody');
+        tbody.innerHTML = data.map((item, i) => {
+            const bar = stockBarColor(item);
+            return `
+            <tr onclick="openDrawer(${i})" data-status="${item.status}">
+                <td><span class="sku-code">${item.sku}</span></td>
+                <td>${item.name}</td>
+                <td><strong>${item.stock.toLocaleString()}</strong> 個</td>
+                <td>${item.safety.toLocaleString()} 個</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="stock-bar-wrap"><div class="stock-bar" style="width:${bar.pct}%;background:${bar.color};"></div></div>
+                        <span style="font-size:11px;font-weight:600;color:${bar.color};">${bar.pct}%</span>
+                    </div>
+                </td>
+                <td>$${item.price.toFixed(2)}</td>
+                <td>${statusBadge(item.status)}</td>
+                <td>
+                    <button onclick="event.stopPropagation();openDrawer(${i})"
+                        style="padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#0ea5e9;">
+                        <i class="fa-solid fa-eye me-1"></i>查看
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    /* ── 搜尋 / 篩選 ──────────────────────────────────────────────── */
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const s = document.getElementById('statusFilter').value;
+        const filtered = inventoryData.filter(item =>
+            (item.sku.toLowerCase().includes(q) || item.name.toLowerCase().includes(q)) &&
+            (s === '' || item.status === s)
+        );
+        renderTable(filtered);
+        document.getElementById('pageInfo').textContent = `顯示第 1–${filtered.length} 筆，共 ${filtered.length} 筆`;
+    }
+
+    /* ── 開啟 Drawer ──────────────────────────────────────────────── */
+    function openDrawer(idx) {
+        // idx 對應 inventoryData（需重新抓篩選後的資料）
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const s = document.getElementById('statusFilter').value;
+        const filtered = inventoryData.filter(item =>
+            (item.sku.toLowerCase().includes(q) || item.name.toLowerCase().includes(q)) &&
+            (s === '' || item.status === s)
+        );
+        const item = filtered[idx] || inventoryData[idx];
+
+        document.getElementById('drawerSkuCode').textContent = item.sku;
+        document.getElementById('drawerSkuName').textContent = item.name;
+        document.getElementById('dCurrent').textContent = item.stock.toLocaleString() + ' 個';
+        document.getElementById('dSafety').textContent = item.safety.toLocaleString() + ' 個';
+        document.getElementById('dPrice').textContent = '$' + item.price.toFixed(2);
+        document.getElementById('dStatus').innerHTML = statusBadge(item.status);
+
+        // 流水帳
+        const txns = txnData[item.sku] || generateFakeTxns(item);
+        document.getElementById('txnBody').innerHTML = txns.map(t => `
+            <tr>
+                <td style="color:#64748b;">${t.dt}</td>
+                <td><span class="${t.type==='IN'?'txn-in':'txn-out'}">${t.type==='IN'?'▲ 入庫':'▼ 出庫'}</span></td>
+                <td class="${t.type==='IN'?'txn-in':'txn-out'}">${t.type==='IN'?'+':''}${t.qty}</td>
+                <td style="font-weight:600;">${t.bal}</td>
+                <td style="color:#64748b;font-size:11px;">${t.ref}</td>
+            </tr>`).join('');
+
+        // 歷史成本
+        const costs = costHistoryData[item.sku] || generateFakeCosts(item.price);
+        document.getElementById('costHistory').innerHTML = costs.map(c => `
+            <div class="cost-item">
+                <span style="color:#64748b;">${c.month}</span>
+                <span style="font-weight:600;">$${c.cost.toFixed(2)}</span>
+                <span style="color:${c.change==='+'?'#ef4444':c.change==='-'?'#22c55e':'#94a3b8'};font-size:11px;">
+                    ${c.change==='+'?'▲ 漲':c.change==='-'?'▼ 降':'— 持平'}
+                </span>
+            </div>`).join('');
+
+        new bootstrap.Offcanvas(document.getElementById('inventoryDrawer')).show();
+    }
+
+    // 沒有明確流水帳資料的 SKU → 自動生成模擬
+    function generateFakeTxns(item) {
+        return [
+            { dt:'2026-06-14 08:30', type:'OUT', qty:-50,   bal:item.stock,       ref:'ORD-AUTO' },
+            { dt:'2026-06-12 14:00', type:'IN',  qty:200,   bal:item.stock+50,    ref:'PO-AUTO-01' },
+            { dt:'2026-06-10 09:15', type:'OUT', qty:-100,  bal:item.stock-150,   ref:'ORD-AUTO-02' },
+            { dt:'2026-06-08 11:30', type:'IN',  qty:300,   bal:item.stock-50,    ref:'PO-AUTO-02' },
+            { dt:'2026-06-05 16:00', type:'OUT', qty:-80,   bal:item.stock-350,   ref:'ORD-AUTO-03' },
+            { dt:'2026-06-02 10:00', type:'IN',  qty:400,   bal:item.stock-270,   ref:'PO-AUTO-03' },
+        ];
+    }
+
+    function generateFakeCosts(basePrice) {
+        return ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'].map((m, i) => {
+            const cost = +(basePrice * (0.9 + i * 0.02)).toFixed(2);
+            const change = i === 0 ? '=' : cost > basePrice * (0.9 + (i-1) * 0.02) ? '+' : '-';
+            return { month: m, cost, change };
+        });
+    }
+
+    /* ── 初始渲染 ─────────────────────────────────────────────────── */
+    renderTable(inventoryData);
+</script>
