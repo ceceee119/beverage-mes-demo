@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Smart MES — 智慧工廠製造執行系統 (Manufacturing Execution System)  
+Smart MES — 飲料工廠製造執行系統 Demo (Beverage Factory MES Demo)  
 ASP.NET Core 9 MVC + Razor Views. No frontend build step; all CSS/JS loaded via CDN.
 
 ## Commands
@@ -88,21 +88,32 @@ The sidebar link for a new controller only highlights if its `asp-controller` va
 | `Orders` | `/Orders` | ✅ Done | 訂單排程 — List View / Kanban Board 切換、備料燈號 |
 | `CostAnalytics` | `/CostAnalytics` | ✅ Done | 成本分析 — KPI 卡、成本結構、訂單拆解表（利潤率 Bar） |
 | `AiQC` | `/AiQC` | ✅ Done | AI 品檢 — 雙欄佈局、瑕疵清單、PCB 模擬圖 + Bounding Box |
-| `RBAC` | `/RBAC` | ⏳ Pending | 權限管理（尚未實作） |
+| `RBAC` | `/RBAC` | ✅ Done | 權限管理 — 使用者列表、角色標籤、CRUD |
 
 ## Mock 資料關聯說明
 
 所有頁面 Mock 資料共用同一組欄位互相關聯：
 
 - **Order_ID**：`ORD-2026-0840` ～ `ORD-2026-0845`（出現在 Orders、CostAnalytics、Dashboard）
-- **SKU_ID**：`SKU-001` ～ `SKU-008`（出現在 Inventory、Orders 備料狀態）
+- **MAT_ID**：`MAT-001` ～ `MAT-008`（出現在 Inventory、Orders 備料狀態）
 - Inventory 的 `status` 欄位影響 Orders 看板上的「備料燈號」顯示邏輯
 
 日後對接後端 API 時，將 View 中的 JavaScript Mock 陣列替換為 `fetch()` 呼叫即可。
 
 ## Git & Collaboration
 
-- Remote: `https://github.com/ceceee119/smartmse.git`
+- Remote: `https://github.com/ceceee119/beverage-mes-demo.git`
 - Branch: `main`
 - `appsettings.Development.json` is gitignored — each dev creates their own locally
 - `bin/` and `obj/` are gitignored — run `dotnet build` after cloning
+
+## 組員環境設定（Clone 後執行）
+
+```bash
+git clone https://github.com/ceceee119/beverage-mes-demo.git
+cd beverage-mes-demo
+dotnet run
+```
+
+瀏覽器開 `http://localhost:5120` 即可看到網站。  
+**不需要資料庫**，所有資料為 JavaScript Mock 陣列，clone 下來直接跑。
