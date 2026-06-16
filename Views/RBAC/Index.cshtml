@@ -1,0 +1,302 @@
+@{
+    ViewData["Title"] = "Access Control";
+}
+
+<style>
+    .section-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05); overflow:hidden; }
+    .card-header-custom { padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; }
+    .card-header-custom h6 { margin:0; font-size:14px; font-weight:700; color:#0f172a; }
+
+    .toolbar { padding:16px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-bottom:1px solid #f1f5f9; }
+    .search-box { position:relative; flex:1; min-width:200px; }
+    .search-box i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:13px; }
+    .search-box input { width:100%; padding:8px 12px 8px 34px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; color:#334155; outline:none; }
+    .search-box input:focus { border-color:#0ea5e9; }
+    .filter-select { padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; color:#334155; background:#fff; cursor:pointer; }
+    .btn-primary-sm { padding:8px 16px; background:#0ea5e9; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; }
+    .btn-primary-sm:hover { background:#0284c7; }
+
+    .data-table { width:100%; font-size:13px; border-collapse:collapse; }
+    .data-table th { padding:10px 16px; color:#64748b; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+    .data-table td { padding:13px 16px; border-bottom:1px solid #f1f5f9; color:#334155; vertical-align:middle; }
+    .data-table tbody tr:hover { background:#f0f9ff; }
+    .data-table tbody tr:last-child td { border-bottom:none; }
+
+    .user-avatar-sm { width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+
+    .status-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .status-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .badge-active   { background:#dcfce7; color:#16a34a; }
+    .badge-inactive { background:#f1f5f9; color:#64748b; }
+
+    .role-badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600; }
+    .role-admin    { background:#ede9fe; color:#7c3aed; }
+    .role-manager  { background:#e0f2fe; color:#0284c7; }
+    .role-supervisor { background:#fef9c3; color:#ca8a04; }
+    .role-qc       { background:#dcfce7; color:#16a34a; }
+    .role-operator { background:#f1f5f9; color:#475569; }
+
+    .pagination-bar { padding:14px 20px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid #f1f5f9; font-size:12px; color:#64748b; }
+    .page-btns { display:flex; gap:4px; }
+    .page-btn { width:30px; height:30px; border-radius:6px; border:1px solid #e2e8f0; background:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#334155; }
+    .page-btn:hover { border-color:#0ea5e9; color:#0ea5e9; }
+    .page-btn.active { background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f172a;">Access Control</h4>
+        <p class="mb-0 text-muted" style="font-size:13px;">使用者帳號與角色權限管理</p>
+    </div>
+    <button class="btn-primary-sm" onclick="openUserModal(-1)">
+        <i class="fa-solid fa-user-plus"></i> 新增使用者
+    </button>
+</div>
+
+<!-- Summary KPI -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;font-size:18px;"><i class="fa-solid fa-users"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;" id="kpiTotal">6</div><div style="font-size:12px;color:#64748b;">使用者總數</div></div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;font-size:18px;"><i class="fa-solid fa-circle-check"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;" id="kpiActive">5</div><div style="font-size:12px;color:#64748b;">啟用中帳號</div></div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div style="background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;font-size:18px;"><i class="fa-solid fa-shield-halved"></i></div>
+            <div><div style="font-size:22px;font-weight:700;color:#0f172a;" id="kpiAdmin">2</div><div style="font-size:12px;color:#64748b;">管理員人數</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- User Table -->
+<div class="section-card">
+    <div class="card-header-custom">
+        <h6><i class="fa-solid fa-shield-halved me-2" style="color:#7c3aed;"></i>使用者列表</h6>
+        <span style="font-size:12px;color:#64748b;" id="tableCount">共 6 位使用者</span>
+    </div>
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="userSearch" placeholder="搜尋姓名或帳號…" oninput="filterUsers()">
+        </div>
+        <select class="filter-select" id="roleFilter" onchange="filterUsers()">
+            <option value="">全部角色</option>
+            <option value="系統管理員">系統管理員</option>
+            <option value="廠長">廠長</option>
+            <option value="產線主管">產線主管</option>
+            <option value="品管員">品管員</option>
+            <option value="操作員">操作員</option>
+        </select>
+        <select class="filter-select" id="statusFilter" onchange="filterUsers()">
+            <option value="">全部狀態</option>
+            <option value="啟用">啟用</option>
+            <option value="停用">停用</option>
+        </select>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>使用者</th>
+                    <th>帳號 (Email)</th>
+                    <th>角色</th>
+                    <th>負責產線</th>
+                    <th>狀態</th>
+                    <th>最後登入</th>
+                    <th>動作</th>
+                </tr>
+            </thead>
+            <tbody id="userBody"></tbody>
+        </table>
+    </div>
+    <div class="pagination-bar">
+        <span id="pageInfo">顯示第 1–6 筆，共 6 筆</span>
+        <div class="page-btns">
+            <button class="page-btn"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const avatarColors = ['#0ea5e9','#7c3aed','#16a34a','#f59e0b','#ef4444','#6366f1'];
+
+    const usersData = [
+        { name:'陳美玲', email:'meiling@brewery.com',  role:'系統管理員', line:'全廠',    status:'啟用', lastLogin:'2026-06-16 08:42' },
+        { name:'林志豪', email:'zhihao@brewery.com',   role:'廠長',       line:'全廠',    status:'啟用', lastLogin:'2026-06-16 07:55' },
+        { name:'王大明', email:'daming@brewery.com',   role:'產線主管',   line:'Line A',  status:'啟用', lastLogin:'2026-06-16 08:10' },
+        { name:'張小雯', email:'xiaowen@brewery.com',  role:'產線主管',   line:'Line B',  status:'啟用', lastLogin:'2026-06-15 17:30' },
+        { name:'劉怡君', email:'yijun@brewery.com',    role:'品管員',     line:'Line C',  status:'啟用', lastLogin:'2026-06-16 09:01' },
+        { name:'黃建宏', email:'jianhong@brewery.com', role:'操作員',     line:'Line A',  status:'停用', lastLogin:'2026-06-10 14:22' },
+    ];
+
+    const roleClass = {
+        '系統管理員': 'role-admin',
+        '廠長':       'role-manager',
+        '產線主管':   'role-supervisor',
+        '品管員':     'role-qc',
+        '操作員':     'role-operator',
+    };
+
+    function initials(name) { return name.slice(0, 1); }
+
+    function renderUsers(data) {
+        document.getElementById('userBody').innerHTML = data.map((u, i) => {
+            const realIdx = usersData.indexOf(u);
+            const color = avatarColors[realIdx % avatarColors.length];
+            return `
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="user-avatar-sm" style="background:${color};">${initials(u.name)}</div>
+                        <span style="font-weight:600;color:#0f172a;">${u.name}</span>
+                    </div>
+                </td>
+                <td style="color:#64748b;">${u.email}</td>
+                <td><span class="role-badge ${roleClass[u.role]}">${u.role}</span></td>
+                <td>${u.line}</td>
+                <td><span class="status-badge ${u.status === '啟用' ? 'badge-active' : 'badge-inactive'}">${u.status}</span></td>
+                <td style="color:#94a3b8;font-size:12px;">${u.lastLogin}</td>
+                <td>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="openUserModal(${realIdx})" title="編輯"
+                            style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#64748b;">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteUser(${realIdx})" title="刪除"
+                            style="padding:5px 10px;border:1px solid #fee2e2;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#dc2626;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('userSearch').value.toLowerCase();
+        const r = document.getElementById('roleFilter').value;
+        const s = document.getElementById('statusFilter').value;
+        const filtered = usersData.filter(u =>
+            (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+            (r === '' || u.role === r) &&
+            (s === '' || u.status === s)
+        );
+        renderUsers(filtered);
+        document.getElementById('pageInfo').textContent = `顯示第 1–${filtered.length} 筆，共 ${filtered.length} 筆`;
+        updateKpi();
+    }
+
+    function updateKpi() {
+        document.getElementById('kpiTotal').textContent = usersData.length;
+        document.getElementById('kpiActive').textContent = usersData.filter(u => u.status === '啟用').length;
+        document.getElementById('kpiAdmin').textContent = usersData.filter(u => u.role === '系統管理員' || u.role === '廠長').length;
+        document.getElementById('tableCount').textContent = `共 ${usersData.length} 位使用者`;
+    }
+
+    // ── CRUD ──────────────────────────────────────────────────────────
+    let _userEditIdx = -1;
+
+    function openUserModal(idx) {
+        _userEditIdx = idx;
+        const isNew = idx === -1;
+        document.getElementById('userModalTitle').textContent = isNew ? '新增使用者' : '編輯使用者';
+        document.getElementById('fUserEmail').disabled = !isNew;
+        if (!isNew) {
+            const u = usersData[idx];
+            document.getElementById('fUserName').value = u.name;
+            document.getElementById('fUserEmail').value = u.email;
+            document.getElementById('fUserRole').value = u.role;
+            document.getElementById('fUserLine').value = u.line;
+            document.getElementById('fUserStatus').value = u.status;
+        } else {
+            ['fUserName','fUserEmail','fUserLine'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fUserRole').value = '操作員';
+            document.getElementById('fUserStatus').value = '啟用';
+        }
+        new bootstrap.Modal(document.getElementById('userModal')).show();
+    }
+
+    function saveUser() {
+        const name  = document.getElementById('fUserName').value.trim();
+        const email = document.getElementById('fUserEmail').value.trim();
+        if (!name || !email) return alert('姓名和帳號為必填欄位');
+        const user = {
+            name, email,
+            role:      document.getElementById('fUserRole').value,
+            line:      document.getElementById('fUserLine').value.trim() || '—',
+            status:    document.getElementById('fUserStatus').value,
+            lastLogin: _userEditIdx === -1 ? '—' : usersData[_userEditIdx].lastLogin,
+        };
+        if (_userEditIdx === -1) usersData.push(user);
+        else usersData[_userEditIdx] = user;
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        filterUsers();
+    }
+
+    function deleteUser(idx) {
+        if (!confirm(`確定刪除使用者「${usersData[idx].name}」？`)) return;
+        usersData.splice(idx, 1);
+        filterUsers();
+    }
+
+    renderUsers(usersData);
+</script>
+
+<!-- ══ User Create/Edit Modal ════════════════════════════════════════ -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:1px solid #e2e8f0;">
+            <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+                <h6 class="modal-title fw-bold" id="userModalTitle" style="color:#0f172a;">新增使用者</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">姓名</label>
+                    <input type="text" class="form-control" id="fUserName" placeholder="輸入員工姓名，例：陳大華" style="font-size:13px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">帳號 (Email)</label>
+                    <input type="email" class="form-control" id="fUserEmail" placeholder="輸入登入帳號，例：dahua@brewery.com" style="font-size:13px;">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">角色</label>
+                        <select class="form-select" id="fUserRole" style="font-size:13px;">
+                            <option value="系統管理員">系統管理員</option>
+                            <option value="廠長">廠長</option>
+                            <option value="產線主管">產線主管</option>
+                            <option value="品管員">品管員</option>
+                            <option value="操作員" selected>操作員</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">狀態</label>
+                        <select class="form-select" id="fUserStatus" style="font-size:13px;">
+                            <option value="啟用">啟用</option>
+                            <option value="停用">停用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">負責產線</label>
+                    <input type="text" class="form-control" id="fUserLine" placeholder="輸入負責產線，例：Line A（全廠管理者填「全廠」）" style="font-size:13px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:14px 20px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size:13px;">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()" style="font-size:13px;background:#0ea5e9;border-color:#0ea5e9;">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>

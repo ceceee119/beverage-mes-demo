@@ -128,7 +128,7 @@
     </div>
     <div class="d-flex gap-2">
         <button class="btn-outline-sm"><i class="fa-solid fa-file-export"></i> Export CSV</button>
-        <button class="btn-primary-sm"><i class="fa-solid fa-plus"></i> 新增料號</button>
+        <button class="btn-primary-sm" onclick="openEditModal(-1)"><i class="fa-solid fa-plus"></i> 新增料號</button>
     </div>
 </div>
 
@@ -165,7 +165,7 @@
     <div class="toolbar">
         <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="搜尋 SKU 或品名…" oninput="filterTable()">
+            <input type="text" id="searchInput" placeholder="搜尋料號或品名…" oninput="filterTable()">
         </div>
         <select class="filter-select" id="statusFilter" onchange="filterTable()">
             <option value="">全部狀態</option>
@@ -257,68 +257,49 @@
             </table>
         </div>
 
-        <!-- Historical Cost -->
-        <div class="drawer-section">
-            <div class="drawer-section-title">歷史採購成本（近 6 個月）</div>
-            <div id="costHistory"></div>
-        </div>
     </div>
 </div>
 
 <script>
     /* ── Mock 資料 ──────────────────────────────────────────────────── */
     const inventoryData = [
-        { sku:'SKU-001', name:'電容 Capacitor C102', stock:450,  safety:500,  price:0.15, status:'Low Stock',    related:['ORD-0841','ORD-0840'] },
-        { sku:'SKU-002', name:'電阻 Resistor R205',  stock:1200, safety:800,  price:0.08, status:'In Stock',     related:['ORD-0842','ORD-0845'] },
-        { sku:'SKU-003', name:'IC 晶片 U404',        stock:0,    safety:200,  price:2.50, status:'Out of Stock', related:['ORD-0843'] },
-        { sku:'SKU-004', name:'PCB 板 v3.1',         stock:320,  safety:300,  price:8.50, status:'In Stock',     related:['ORD-0841','ORD-0845'] },
-        { sku:'SKU-005', name:'電感 Inductor L101',  stock:880,  safety:600,  price:0.35, status:'In Stock',     related:['ORD-0842'] },
-        { sku:'SKU-006', name:'連接器 Connector J301',stock:150, safety:400,  price:1.20, status:'Low Stock',    related:['ORD-0843'] },
-        { sku:'SKU-007', name:'LED 燈 D502',         stock:2500, safety:1000, price:0.05, status:'In Stock',     related:['ORD-0844','ORD-0840'] },
-        { sku:'SKU-008', name:'MOSFET Q201',         stock:75,   safety:300,  price:3.80, status:'Low Stock',    related:['ORD-0844'] },
+        { sku:'MAT-001', name:'礦泉水瓶 500ml',    stock:8500,  safety:5000, price:0.80, status:'In Stock',     related:['ORD-0841','ORD-0840'] },
+        { sku:'MAT-002', name:'綠茶瓶蓋',          stock:3200,  safety:5000, price:0.20, status:'Low Stock',    related:['ORD-0842','ORD-0845'] },
+        { sku:'MAT-003', name:'可樂鋁罐 330ml',    stock:0,     safety:3000, price:1.50, status:'Out of Stock', related:['ORD-0843'] },
+        { sku:'MAT-004', name:'紙箱 24入',         stock:1200,  safety:800,  price:12.0, status:'In Stock',     related:['ORD-0841','ORD-0845'] },
+        { sku:'MAT-005', name:'綠茶濃縮液 5L',     stock:680,   safety:400,  price:85.0, status:'In Stock',     related:['ORD-0842'] },
+        { sku:'MAT-006', name:'礦泉水標籤貼紙',    stock:2100,  safety:5000, price:0.05, status:'Low Stock',    related:['ORD-0841'] },
+        { sku:'MAT-007', name:'塑膠瓶蓋 (通用)',   stock:12000, safety:5000, price:0.15, status:'In Stock',     related:['ORD-0841','ORD-0840'] },
+        { sku:'MAT-008', name:'熱收縮膜 (包裝用)', stock:950,   safety:2000, price:3.50, status:'Low Stock',    related:['ORD-0844'] },
     ];
 
-    // 每個 SKU 的模擬流水帳
     const txnData = {
-        'SKU-001': [
-            { dt:'2026-06-14 09:12', type:'OUT', qty:-200, bal:450,  ref:'ORD-0841' },
-            { dt:'2026-06-13 14:30', type:'IN',  qty:300,  bal:650,  ref:'PO-2026-112' },
-            { dt:'2026-06-12 08:05', type:'OUT', qty:-150, bal:350,  ref:'ORD-0840' },
-            { dt:'2026-06-10 16:45', type:'IN',  qty:500,  bal:500,  ref:'PO-2026-098' },
-            { dt:'2026-06-08 10:20', type:'OUT', qty:-100, bal:0,    ref:'ORD-0838' },
-            { dt:'2026-06-05 13:00', type:'IN',  qty:400,  bal:100,  ref:'PO-2026-085' },
+        'MAT-001': [
+            { dt:'2026-06-14 09:12', type:'OUT', qty:-2000, bal:8500,  ref:'ORD-0841' },
+            { dt:'2026-06-13 14:30', type:'IN',  qty:5000,  bal:10500, ref:'PO-2026-112' },
+            { dt:'2026-06-12 08:05', type:'OUT', qty:-1500, bal:5500,  ref:'ORD-0840' },
+            { dt:'2026-06-10 16:45', type:'IN',  qty:3000,  bal:7000,  ref:'PO-2026-098' },
+            { dt:'2026-06-08 10:20', type:'OUT', qty:-2000, bal:4000,  ref:'ORD-0838' },
+            { dt:'2026-06-05 13:00', type:'IN',  qty:4000,  bal:6000,  ref:'PO-2026-085' },
         ],
-        'SKU-002': [
-            { dt:'2026-06-14 11:00', type:'IN',  qty:500,  bal:1200, ref:'PO-2026-115' },
-            { dt:'2026-06-13 09:30', type:'OUT', qty:-300, bal:700,  ref:'ORD-0842' },
-            { dt:'2026-06-11 15:20', type:'IN',  qty:600,  bal:1000, ref:'PO-2026-101' },
-            { dt:'2026-06-09 08:45', type:'OUT', qty:-200, bal:400,  ref:'ORD-0839' },
-            { dt:'2026-06-07 14:10', type:'IN',  qty:400,  bal:600,  ref:'PO-2026-092' },
-            { dt:'2026-06-05 10:30', type:'OUT', qty:-100, bal:200,  ref:'ORD-0836' },
+        'MAT-002': [
+            { dt:'2026-06-14 11:00', type:'IN',  qty:2000,  bal:3200, ref:'PO-2026-115' },
+            { dt:'2026-06-13 09:30', type:'OUT', qty:-1500, bal:1200, ref:'ORD-0842' },
+            { dt:'2026-06-11 15:20', type:'IN',  qty:3000,  bal:2700, ref:'PO-2026-101' },
+            { dt:'2026-06-09 08:45', type:'OUT', qty:-2000, bal:-300, ref:'ORD-0839' },
+            { dt:'2026-06-07 14:10', type:'IN',  qty:2000,  bal:1700, ref:'PO-2026-092' },
+            { dt:'2026-06-05 10:30', type:'OUT', qty:-1000, bal:-300, ref:'ORD-0836' },
         ],
-        'SKU-003': [
-            { dt:'2026-06-13 17:00', type:'OUT', qty:-200, bal:0,   ref:'ORD-0843 (缺料警示)' },
-            { dt:'2026-06-10 09:00', type:'IN',  qty:200,  bal:200, ref:'PO-2026-099' },
-            { dt:'2026-06-08 13:20', type:'OUT', qty:-150, bal:0,   ref:'ORD-0837' },
-            { dt:'2026-06-05 10:00', type:'IN',  qty:300,  bal:150, ref:'PO-2026-088' },
-            { dt:'2026-06-02 16:30', type:'OUT', qty:-100, bal:-150,ref:'ORD-0832' },
-            { dt:'2026-05-30 09:15', type:'IN',  qty:400,  bal:250, ref:'PO-2026-071' },
+        'MAT-003': [
+            { dt:'2026-06-13 17:00', type:'OUT', qty:-3000, bal:0,    ref:'ORD-0843 (缺料警示)' },
+            { dt:'2026-06-10 09:00', type:'IN',  qty:3000,  bal:3000, ref:'PO-2026-099' },
+            { dt:'2026-06-08 13:20', type:'OUT', qty:-2000, bal:0,    ref:'ORD-0837' },
+            { dt:'2026-06-05 10:00', type:'IN',  qty:3000,  bal:2000, ref:'PO-2026-088' },
+            { dt:'2026-06-02 16:30', type:'OUT', qty:-1500, bal:-500, ref:'ORD-0832' },
+            { dt:'2026-05-30 09:15', type:'IN',  qty:2500,  bal:500,  ref:'PO-2026-071' },
         ],
     };
 
-    // 歷史成本模擬
-    const costHistoryData = {
-        'SKU-001': [
-            { month:'2026-01', cost:0.13, change:'+' }, { month:'2026-02', cost:0.14, change:'+' },
-            { month:'2026-03', cost:0.14, change:'=' }, { month:'2026-04', cost:0.15, change:'+' },
-            { month:'2026-05', cost:0.15, change:'=' }, { month:'2026-06', cost:0.15, change:'=' },
-        ],
-        'SKU-002': [
-            { month:'2026-01', cost:0.07, change:'+' }, { month:'2026-02', cost:0.08, change:'+' },
-            { month:'2026-03', cost:0.08, change:'=' }, { month:'2026-04', cost:0.08, change:'=' },
-            { month:'2026-05', cost:0.08, change:'=' }, { month:'2026-06', cost:0.08, change:'=' },
-        ],
-    };
 
     /* ── 渲染表格 ─────────────────────────────────────────────────── */
     function statusBadge(s) {
@@ -334,14 +315,15 @@
 
     function renderTable(data) {
         const tbody = document.getElementById('inventoryBody');
-        tbody.innerHTML = data.map((item, i) => {
+        tbody.innerHTML = data.map((item) => {
+            const realIdx = inventoryData.indexOf(item);
             const bar = stockBarColor(item);
             return `
-            <tr onclick="openDrawer(${i})" data-status="${item.status}">
+            <tr onclick="openDrawer('${item.sku}')" data-status="${item.status}">
                 <td><span class="sku-code">${item.sku}</span></td>
                 <td>${item.name}</td>
-                <td><strong>${item.stock.toLocaleString()}</strong> 個</td>
-                <td>${item.safety.toLocaleString()} 個</td>
+                <td><strong>${item.stock.toLocaleString()}</strong> 瓶</td>
+                <td>${item.safety.toLocaleString()} 瓶</td>
                 <td>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <div class="stock-bar-wrap"><div class="stock-bar" style="width:${bar.pct}%;background:${bar.color};"></div></div>
@@ -351,10 +333,20 @@
                 <td>$${item.price.toFixed(2)}</td>
                 <td>${statusBadge(item.status)}</td>
                 <td>
-                    <button onclick="event.stopPropagation();openDrawer(${i})"
-                        style="padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#0ea5e9;">
-                        <i class="fa-solid fa-eye me-1"></i>查看
-                    </button>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="event.stopPropagation();openDrawer('${item.sku}')" title="查看"
+                            style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#0ea5e9;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button onclick="event.stopPropagation();openEditModal(${realIdx})" title="編輯"
+                            style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#64748b;">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="event.stopPropagation();deleteRow(${realIdx})" title="刪除"
+                            style="padding:5px 10px;border:1px solid #fee2e2;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#dc2626;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>`;
         }).join('');
@@ -373,20 +365,14 @@
     }
 
     /* ── 開啟 Drawer ──────────────────────────────────────────────── */
-    function openDrawer(idx) {
-        // idx 對應 inventoryData（需重新抓篩選後的資料）
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        const s = document.getElementById('statusFilter').value;
-        const filtered = inventoryData.filter(item =>
-            (item.sku.toLowerCase().includes(q) || item.name.toLowerCase().includes(q)) &&
-            (s === '' || item.status === s)
-        );
-        const item = filtered[idx] || inventoryData[idx];
+    function openDrawer(sku) {
+        const item = inventoryData.find(i => i.sku === sku);
+        if (!item) return;
 
         document.getElementById('drawerSkuCode').textContent = item.sku;
         document.getElementById('drawerSkuName').textContent = item.name;
-        document.getElementById('dCurrent').textContent = item.stock.toLocaleString() + ' 個';
-        document.getElementById('dSafety').textContent = item.safety.toLocaleString() + ' 個';
+        document.getElementById('dCurrent').textContent = item.stock.toLocaleString() + ' 瓶';
+        document.getElementById('dSafety').textContent = item.safety.toLocaleString() + ' 瓶';
         document.getElementById('dPrice').textContent = '$' + item.price.toFixed(2);
         document.getElementById('dStatus').innerHTML = statusBadge(item.status);
 
@@ -400,17 +386,6 @@
                 <td style="font-weight:600;">${t.bal}</td>
                 <td style="color:#64748b;font-size:11px;">${t.ref}</td>
             </tr>`).join('');
-
-        // 歷史成本
-        const costs = costHistoryData[item.sku] || generateFakeCosts(item.price);
-        document.getElementById('costHistory').innerHTML = costs.map(c => `
-            <div class="cost-item">
-                <span style="color:#64748b;">${c.month}</span>
-                <span style="font-weight:600;">$${c.cost.toFixed(2)}</span>
-                <span style="color:${c.change==='+'?'#ef4444':c.change==='-'?'#22c55e':'#94a3b8'};font-size:11px;">
-                    ${c.change==='+'?'▲ 漲':c.change==='-'?'▼ 降':'— 持平'}
-                </span>
-            </div>`).join('');
 
         new bootstrap.Offcanvas(document.getElementById('inventoryDrawer')).show();
     }
@@ -427,14 +402,88 @@
         ];
     }
 
-    function generateFakeCosts(basePrice) {
-        return ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'].map((m, i) => {
-            const cost = +(basePrice * (0.9 + i * 0.02)).toFixed(2);
-            const change = i === 0 ? '=' : cost > basePrice * (0.9 + (i-1) * 0.02) ? '+' : '-';
-            return { month: m, cost, change };
-        });
-    }
-
     /* ── 初始渲染 ─────────────────────────────────────────────────── */
     renderTable(inventoryData);
+
+    // ── CRUD ──────────────────────────────────────────────────────────
+    let _editIdx = -1;
+
+    function openEditModal(idx) {
+        _editIdx = idx;
+        const isNew = idx === -1;
+        document.getElementById('invModalTitle').textContent = isNew ? '新增料號' : '編輯料號';
+        document.getElementById('fSku').disabled = !isNew;
+        if (!isNew) {
+            const d = inventoryData[idx];
+            document.getElementById('fSku').value = d.sku;
+            document.getElementById('fName').value = d.name;
+            document.getElementById('fStock').value = d.stock;
+            document.getElementById('fSafety').value = d.safety;
+            document.getElementById('fPrice').value = d.price;
+        } else {
+            ['fSku','fName','fStock','fSafety','fPrice'].forEach(id => document.getElementById(id).value = '');
+        }
+        new bootstrap.Modal(document.getElementById('invModal')).show();
+    }
+
+    function saveInventory() {
+        const stock = parseInt(document.getElementById('fStock').value) || 0;
+        const safety = parseInt(document.getElementById('fSafety').value) || 0;
+        const price = parseFloat(document.getElementById('fPrice').value) || 0;
+        const sku = document.getElementById('fSku').value.trim();
+        const name = document.getElementById('fName').value.trim();
+        if (!sku || !name) return alert('SKU 和品名為必填欄位');
+        const status = stock === 0 ? 'Out of Stock' : stock < safety ? 'Low Stock' : 'In Stock';
+        const item = { sku, name, stock, safety, price, status, related: [] };
+        if (_editIdx === -1) inventoryData.push(item);
+        else inventoryData[_editIdx] = { ...inventoryData[_editIdx], ...item };
+        bootstrap.Modal.getInstance(document.getElementById('invModal')).hide();
+        filterTable();
+    }
+
+    function deleteRow(idx) {
+        if (!confirm(`確定刪除 ${inventoryData[idx].sku}？`)) return;
+        inventoryData.splice(idx, 1);
+        filterTable();
+    }
 </script>
+
+<!-- ══ Inventory Create/Edit Modal ════════════════════════════════════ -->
+<div class="modal fade" id="invModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:1px solid #e2e8f0;">
+            <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+                <h6 class="modal-title fw-bold" id="invModalTitle" style="color:#0f172a;">新增料號</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">料號</label>
+                    <input type="text" class="form-control" id="fSku" placeholder="輸入料號，例：MAT-009" style="font-size:13px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">品名</label>
+                    <input type="text" class="form-control" id="fName" placeholder="輸入品名，例：柳橙汁瓶蓋" style="font-size:13px;">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">目前庫存數量</label>
+                        <input type="number" class="form-control" id="fStock" placeholder="輸入數量，例：1000" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">安全庫存量（最低）</label>
+                        <input type="number" class="form-control" id="fSafety" placeholder="低於此數會警示，例：500" min="0" style="font-size:13px;">
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">單價（元）</label>
+                    <input type="number" class="form-control" id="fPrice" placeholder="輸入單價，例：0.80" min="0" step="0.01" style="font-size:13px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:14px 20px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size:13px;">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveInventory()" style="font-size:13px;background:#0ea5e9;border-color:#0ea5e9;">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>

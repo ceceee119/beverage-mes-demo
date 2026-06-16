@@ -103,7 +103,7 @@
                 <i class="fa-solid fa-table-columns me-1"></i>Kanban
             </button>
         </div>
-        <button class="btn-primary-sm"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+        <button class="btn-primary-sm" onclick="openOrderModal(-1)"><i class="fa-solid fa-plus"></i> 新增訂單</button>
     </div>
 </div>
 
@@ -134,7 +134,6 @@
                         <th>訂單編號</th>
                         <th>客戶</th>
                         <th>數量</th>
-                        <th>相關 SKU</th>
                         <th>交期</th>
                         <th>備料狀態</th>
                         <th>階段</th>
@@ -172,12 +171,12 @@
     /* ── Mock 訂單資料 ─────────────────────────────────────────────── */
     // matStatus: ready=備料齊全 / partial=部分缺料 / missing=嚴重缺料
     const ordersData = [
-        { id:'ORD-2026-0841', customer:'Foxconn Ltd.',   qty:5000, skus:['SKU-001','SKU-004'], due:'2026-06-14', stage:'In Progress', matStatus:'partial',  progress:65, delayed:true  },
-        { id:'ORD-2026-0842', customer:'Delta Group',    qty:2200, skus:['SKU-002','SKU-005'], due:'2026-06-16', stage:'In Progress', matStatus:'ready',    progress:45, delayed:false },
-        { id:'ORD-2026-0843', customer:'ASUS Corp.',     qty:800,  skus:['SKU-003','SKU-006'], due:'2026-06-20', stage:'Queued',      matStatus:'missing',  progress:0,  delayed:false },
-        { id:'ORD-2026-0844', customer:'MediaTek',       qty:3500, skus:['SKU-007','SKU-008'], due:'2026-06-25', stage:'Queued',      matStatus:'partial',  progress:0,  delayed:false },
-        { id:'ORD-2026-0845', customer:'Pegatron Corp.', qty:1500, skus:['SKU-004','SKU-002'], due:'2026-06-18', stage:'QC',          matStatus:'ready',    progress:90, delayed:false },
-        { id:'ORD-2026-0840', customer:'Compal Elec.',   qty:2800, skus:['SKU-001','SKU-007'], due:'2026-06-10', stage:'Completed',   matStatus:'ready',    progress:100,delayed:false },
+        { id:'ORD-2026-0841', customer:'全聯超市',  qty:10000, skus:['MAT-001','MAT-007'], due:'2026-06-14', stage:'In Progress', matStatus:'partial',  progress:65, delayed:true  },
+        { id:'ORD-2026-0842', customer:'家樂福',    qty:5000,  skus:['MAT-002','MAT-005'], due:'2026-06-16', stage:'In Progress', matStatus:'ready',    progress:45, delayed:false },
+        { id:'ORD-2026-0843', customer:'7-ELEVEN', qty:3000,  skus:['MAT-003'],           due:'2026-06-20', stage:'Queued',      matStatus:'missing',  progress:0,  delayed:false },
+        { id:'ORD-2026-0844', customer:'OK超商',    qty:8000,  skus:['MAT-007','MAT-008'], due:'2026-06-25', stage:'Queued',      matStatus:'partial',  progress:0,  delayed:false },
+        { id:'ORD-2026-0845', customer:'頂好超市',  qty:2500,  skus:['MAT-004','MAT-002'], due:'2026-06-18', stage:'QC',          matStatus:'ready',    progress:90, delayed:false },
+        { id:'ORD-2026-0840', customer:'萊爾富',    qty:6000,  skus:['MAT-001','MAT-007'], due:'2026-06-10', stage:'Completed',   matStatus:'ready',    progress:100,delayed:false },
     ];
 
     function matBadge(s) {
@@ -202,21 +201,30 @@
 
     /* ── List View 渲染 ───────────────────────────────────────────── */
     function renderOrders(data) {
-        document.getElementById('orderBody').innerHTML = data.map(o => `
+        document.getElementById('orderBody').innerHTML = data.map(o => {
+            const realIdx = ordersData.indexOf(o);
+            return `
             <tr>
                 <td><span class="order-id">${o.id}</span></td>
                 <td>${o.customer}</td>
-                <td>${o.qty.toLocaleString()} 個</td>
-                <td>${o.skus.map(s=>`<span style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;margin-right:3px;">${s}</span>`).join('')}</td>
+                <td>${o.qty.toLocaleString()} 瓶</td>
                 <td style="${o.delayed?'color:#dc2626;font-weight:600;':''}">${o.due}</td>
                 <td>${matBadge(o.matStatus)}</td>
                 <td>${stageBadge(o.stage, o.delayed)}</td>
                 <td>
-                    <button style="padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#0ea5e9;">
-                        <i class="fa-solid fa-eye me-1"></i>詳情
-                    </button>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="openOrderModal(${realIdx})" title="編輯"
+                            style="padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#64748b;">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteOrder(${realIdx})" title="刪除"
+                            style="padding:5px 10px;border:1px solid #fee2e2;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;color:#dc2626;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     function filterOrders() {
@@ -255,7 +263,7 @@
                         <div class="kanban-card">
                             <div class="kc-id">${o.id}</div>
                             <div class="kc-customer">${o.customer}</div>
-                            <div class="kc-meta"><i class="fa-solid fa-boxes-stacked me-1"></i>${o.qty.toLocaleString()} 個 &nbsp;·&nbsp; <i class="fa-regular fa-calendar me-1"></i>${o.due}</div>
+                            <div class="kc-meta"><i class="fa-solid fa-boxes-stacked me-1"></i>${o.qty.toLocaleString()} 瓶 &nbsp;·&nbsp; <i class="fa-regular fa-calendar me-1"></i>${o.due}</div>
                             ${o.progress > 0 ? `
                             <div class="progress-thin">
                                 <div class="progress-thin-bar" style="width:${o.progress}%;background:${col.barColor};"></div>
@@ -282,4 +290,111 @@
 
     /* ── 初始渲染 ─────────────────────────────────────────────────── */
     renderOrders(ordersData);
+
+    // ── CRUD ──────────────────────────────────────────────────────────
+    let _orderEditIdx = -1;
+
+    function openOrderModal(idx) {
+        _orderEditIdx = idx;
+        const isNew = idx === -1;
+        document.getElementById('orderModalTitle').textContent = isNew ? '新增訂單' : '編輯訂單';
+        document.getElementById('fOrdId').disabled = !isNew;
+        if (!isNew) {
+            const o = ordersData[idx];
+            document.getElementById('fOrdId').value = o.id;
+            document.getElementById('fOrdCustomer').value = o.customer;
+            document.getElementById('fOrdQty').value = o.qty;
+            document.getElementById('fOrdDue').value = o.due;
+            document.getElementById('fOrdMat').value = o.matStatus;
+            document.getElementById('fOrdStage').value = o.stage;
+        } else {
+            ['fOrdId','fOrdCustomer','fOrdQty','fOrdDue'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fOrdMat').value = 'ready';
+            document.getElementById('fOrdStage').value = 'Queued';
+        }
+        new bootstrap.Modal(document.getElementById('orderModal')).show();
+    }
+
+    function saveOrder() {
+        const id = document.getElementById('fOrdId').value.trim();
+        const customer = document.getElementById('fOrdCustomer').value.trim();
+        const qty = parseInt(document.getElementById('fOrdQty').value) || 0;
+        if (!id || !customer) return alert('訂單編號和客戶為必填欄位');
+        const skus = _orderEditIdx === -1 ? [] : ordersData[_orderEditIdx].skus;
+        const order = {
+            id, customer, qty, skus,
+            due: document.getElementById('fOrdDue').value,
+            stage: document.getElementById('fOrdStage').value,
+            matStatus: document.getElementById('fOrdMat').value,
+            progress: _orderEditIdx === -1 ? 0 : ordersData[_orderEditIdx].progress,
+            delayed: false,
+        };
+        if (_orderEditIdx === -1) ordersData.push(order);
+        else ordersData[_orderEditIdx] = order;
+        bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+        filterOrders();
+        if (document.getElementById('kanbanView').style.display !== 'none') renderKanban();
+    }
+
+    function deleteOrder(idx) {
+        if (!confirm(`確定刪除訂單 ${ordersData[idx].id}？`)) return;
+        ordersData.splice(idx, 1);
+        filterOrders();
+        if (document.getElementById('kanbanView').style.display !== 'none') renderKanban();
+    }
 </script>
+
+<!-- ══ Order Create/Edit Modal ══════════════════════════════════════ -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:1px solid #e2e8f0;">
+            <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+                <h6 class="modal-title fw-bold" id="orderModalTitle" style="color:#0f172a;">新增訂單</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">訂單編號</label>
+                    <input type="text" class="form-control" id="fOrdId" placeholder="系統自動產生，例：ORD-2026-0847" style="font-size:13px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">客戶名稱</label>
+                    <input type="text" class="form-control" id="fOrdCustomer" placeholder="輸入客戶名稱，例：全聯超市" style="font-size:13px;">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">訂購數量（瓶）</label>
+                        <input type="number" class="form-control" id="fOrdQty" placeholder="輸入瓶數，例：5000" min="1" style="font-size:13px;">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">交貨日期</label>
+                        <input type="date" class="form-control" id="fOrdDue" style="font-size:13px;">
+                    </div>
+                </div>
+                <div class="row g-2 mb-0">
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">備料狀態</label>
+                        <select class="form-select" id="fOrdMat" style="font-size:13px;">
+                            <option value="ready">備料齊全</option>
+                            <option value="partial">部分缺料</option>
+                            <option value="missing">嚴重缺料</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" style="font-size:13px;font-weight:600;color:#334155;">階段</label>
+                        <select class="form-select" id="fOrdStage" style="font-size:13px;">
+                            <option value="Queued">待備料</option>
+                            <option value="In Progress">生產中</option>
+                            <option value="QC">品質檢驗</option>
+                            <option value="Completed">已出貨</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:14px 20px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-size:13px;">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveOrder()" style="font-size:13px;background:#0ea5e9;border-color:#0ea5e9;">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>

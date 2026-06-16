@@ -213,12 +213,12 @@
 <script>
     /* ── Mock 成本資料（與 Orders/Inventory 欄位互相關聯）── */
     const costData = [
-        { id:'ORD-2026-0841', customer:'Foxconn Ltd.',   revenue:42000, matCost:21840, laborCost:8820,  overhead:4410,  skus:['SKU-001','SKU-004'] },
-        { id:'ORD-2026-0842', customer:'Delta Group',    revenue:18700, matCost:9163,  laborCost:3927,  overhead:1963,  skus:['SKU-002','SKU-005'] },
-        { id:'ORD-2026-0843', customer:'ASUS Corp.',     revenue:6800,  matCost:3196,  laborCost:1428,  overhead:714,   skus:['SKU-003','SKU-006'] },
-        { id:'ORD-2026-0844', customer:'MediaTek',       revenue:28000, matCost:13160, laborCost:5880,  overhead:2940,  skus:['SKU-007','SKU-008'] },
-        { id:'ORD-2026-0845', customer:'Pegatron Corp.', revenue:14250, matCost:6555,  laborCost:3135,  overhead:1568,  skus:['SKU-004','SKU-002'] },
-        { id:'ORD-2026-0840', customer:'Compal Elec.',   revenue:23800, matCost:11424, laborCost:5082,  overhead:2541,  skus:['SKU-001','SKU-007'] },
+        { id:'ORD-2026-0841', customer:'全聯超市',  revenue:42000, matCost:21840, laborCost:8820,  overhead:4410,  skus:['MAT-001','MAT-007'] },
+        { id:'ORD-2026-0842', customer:'家樂福',    revenue:18700, matCost:9163,  laborCost:3927,  overhead:1963,  skus:['MAT-002','MAT-005'] },
+        { id:'ORD-2026-0843', customer:'7-ELEVEN', revenue:6800,  matCost:3196,  laborCost:1428,  overhead:714,   skus:['MAT-003'] },
+        { id:'ORD-2026-0844', customer:'OK超商',    revenue:28000, matCost:13160, laborCost:5880,  overhead:2940,  skus:['MAT-007','MAT-008'] },
+        { id:'ORD-2026-0845', customer:'頂好超市',  revenue:14250, matCost:6555,  laborCost:3135,  overhead:1568,  skus:['MAT-004','MAT-002'] },
+        { id:'ORD-2026-0840', customer:'萊爾富',    revenue:23800, matCost:11424, laborCost:5082,  overhead:2541,  skus:['MAT-001','MAT-007'] },
     ];
 
     function renderCosts(data) {
